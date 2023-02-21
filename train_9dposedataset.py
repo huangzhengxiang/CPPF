@@ -1,5 +1,4 @@
 from glob import glob
-
 import hydra
 import torch
 from models.model import PPFEncoder, PointEncoder
@@ -26,6 +25,8 @@ def main(cfg):
         shapenet_id = typename2shapenetid[cfg.category]
         shapenames = os.listdir(os.path.join(hydra.utils.to_absolute_path(cfg.shapenet_root), '{}'.format(shapenet_id)))
         shapenames = [shapenet_id + '/' + name for name in shapenames]
+    print(shapenames)
+    exit()    
         
     ds = ShapeNetDataset(cfg, shapenames)
     df = torch.utils.data.DataLoader(ds, pin_memory=True, batch_size=cfg.batch_size, shuffle=True, num_workers=6)

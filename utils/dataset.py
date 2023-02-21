@@ -7,15 +7,17 @@ from .util import real2prob, backproject, rotx, roty
 import open3d as o3d
 import trimesh
 import hydra
-import MinkowskiEngine as ME
 from scipy.spatial.transform import Rotation as R
 import OpenEXR
-import logging
-logger = logging.getLogger("OpenGL.arrays.arraydatatype")
-logger.setLevel(logging.ERROR)
-logger = logging.getLogger('OpenGL.acceleratesupport')
-logger.setLevel(logging.ERROR)
     
+def downsample(pc, res):
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(pc)
+    _, _, idxs = pcd.voxel_down_sample_and_trace(res, pcd.get_min_bound(), pcd.get_max_bound())
+    res = []
+    for idx in idxs:
+        res.append(np.random.choice(np.array(idx)))
+    return np.array(res)    
 
 def generate_target(pc, pc_normal, up_sym=False, right_sym=False, z_right=False, subsample=200000):
     if subsample is None:
@@ -215,7 +217,7 @@ class ShapeNetDataset(torch.utils.data.Dataset):
         # random jitter, all point together
         pc = pc + np.clip(self.cfg.res / 4 * np.random.randn(*pc.shape), -self.cfg.res / 2, self.cfg.res / 2)
         
-        discrete_coords, indices = ME.utils.sparse_quantize(np.ascontiguousarray(pc), return_index=True, quantization_size=self.cfg.res)
+        indices = downsample(np.ascontiguousarray(pc), self.cfg.res)
         pc = pc[indices]
         
         if pc.shape[0] < 100 or pc.shape[0] > self.cfg.npoint_max:
